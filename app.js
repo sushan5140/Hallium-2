@@ -211,7 +211,7 @@ vocabulary:()=>`
 <section class="page">
   <header class="page-header"><div><span class="korean-label">단어 · VOCABULARY</span><h1>Words should feel useful before they feel numerous.</h1></div><p>Every word now comes with a sentence so you learn how it behaves, not only what it translates to.</p></header>
   <div class="section-title"><h2>Everyday foundation set</h2><p>12 words · people, places, objects and time</p></div>
-  <div class="module-grid">${vocab.map(([k,e,s,ex,tr])=>`<article class="module-card"><div><span class="meta">${s}</span><div class="word">${k}</div><div class="meaning">${e}</div><p style="margin-top:14px"><strong>${ex}</strong><br>${tr}</p></div><button class="btn secondary">Hear + recall</button></article>`).join('')}</div>
+  <div class="module-grid">${vocab.map(([k,e,s,ex,tr])=>`<article class="module-card"><div><span class="meta">${s}</span><div class="word">${k}</div><div class="meaning">${e}</div><p style="margin-top:14px"><strong>${ex}</strong><br>${tr}</p></div><button class="btn secondary" data-speak>Hear + recall</button></article>`).join('')}</div>
   <div class="section-title"><h2>Mini recall</h2><p>Try answering before looking back.</p></div>
   ${exampleList([
     ['“school” → ?','학교'],
@@ -254,7 +254,7 @@ practice:()=>`
 <section class="page">
   <header class="page-header"><div><span class="korean-label">연습 · PRACTICE</span><h1>Use the Korean you just learned.</h1></div><p>This route now contains real practice instead of falling back to the Today screen.</p></header>
   <div class="hero-grid">
-    <article class="hero-panel"><div><span class="eyebrow">Round 1 · PARTICLES</span><h2>${quiz[0].q}</h2><p><strong>Answer:</strong> ${quiz[0].a}<br>${quiz[0].why}</p></div><div class="actions"><button class="btn">I got it</button><button class="btn secondary" data-go="grammar">Review 에 / 에서</button></div></article>
+    <article class="hero-panel"><div><span class="eyebrow">Round 1 · PARTICLES</span><h2>${quiz[0].q}</h2><p><strong>Answer:</strong> ${quiz[0].a}<br>${quiz[0].why}</p></div><div class="actions"><button class="btn" data-next-practice>I got it</button><button class="btn secondary" data-go="grammar">Review 에 / 에서</button></div></article>
     <div class="side-stack"><article class="soft-card tint-lavender"><span class="eyebrow">Say it</span><h3>오늘 어디에서 공부해요?</h3><p>Where are you studying today?</p></article><article class="soft-card tint-sage"><span class="eyebrow">Answer frame</span><h3>저는 ___에서 공부해요.</h3><p>I study at ___.</p></article></div>
   </div>
   <div class="section-title"><h2>Four quick checks</h2><p>Read the question first, then reveal the answer mentally.</p></div>
@@ -324,11 +324,54 @@ creator:()=>`
 </section>`
 };
 
+function speakKorean(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='ko-KR';
+  u.rate=.88;
+  const voices=window.speechSynthesis.getVoices();
+  const ko=voices.find(v=>/^ko(-|_)/i.test(v.lang))||voices.find(v=>/korean/i.test(v.name));
+  if(ko) u.voice=ko;
+  window.speechSynthesis.speak(u);
+}
+
+function wireInteractions(){
+  view.querySelectorAll('[data-speak]').forEach(btn=>btn.addEventListener('click',()=>{
+    const card=btn.closest('.module-card,.hero-panel,.study-row,.phrase-item');
+    const korean=card?.querySelector('.word,h2,strong')?.textContent?.trim();
+    if(korean) speakKorean(korean);
+  }));
+
+  const tabs=[...view.querySelectorAll('.phrase-tabs button')];
+  const phraseList=view.querySelector('.phrase-list');
+  if(tabs.length&&phraseList){
+    tabs.forEach(tab=>tab.addEventListener('click',()=>{
+      tabs.forEach(t=>t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+      const items=partnerSets[tab.textContent.trim()]||[];
+      phraseList.innerHTML=items.map(([k,e])=>`<div class="phrase-item" tabindex="0"><strong>${k}</strong><span>${e}</span></div>`).join('');
+      phraseList.querySelectorAll('.phrase-item').forEach(item=>item.addEventListener('click',()=>speakKorean(item.querySelector('strong')?.textContent||'')));
+    }));
+    tabs[0]?.classList.add('is-active');
+  }
+
+  view.querySelectorAll('.phrase-item').forEach(item=>item.addEventListener('click',()=>speakKorean(item.querySelector('strong')?.textContent||'')));
+
+  view.querySelectorAll('.study-row').forEach(row=>{
+    row.addEventListener('dblclick',()=>{
+      const k=row.querySelector('strong')?.textContent?.trim();
+      if(k&&/[가-힣]/.test(k)) speakKorean(k.replace(/^\d+\.\s*/, ''));
+    });
+  });
+}
+
 function render(route){
   const key=pages[route]?route:'home';
   view.innerHTML=pages[key]();
   buttons.forEach(b=>b.classList.toggle('is-active',b.dataset.route===key));
   view.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
+  wireInteractions();
   menu?.classList.remove('is-open');menu?.setAttribute('aria-hidden','true');
   requestAnimationFrame(()=>view.focus({preventScroll:true}));
 }

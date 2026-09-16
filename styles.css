@@ -71,9 +71,9 @@ button{color:inherit}
 .phrase-browser,.dialogue-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:24px}
 .phrase-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
 .phrase-tabs button{border:1px solid var(--line);background:transparent;padding:8px 11px;border-radius:999px;font-size:12px}
-.phrase-tabs button:first-child{background:var(--deep);color:white;border-color:var(--deep)}
+.phrase-tabs button:first-child,.phrase-tabs button.is-active{background:var(--deep);color:white;border-color:var(--deep)}
 .phrase-list{display:grid;gap:8px}
-.phrase-item{padding:14px;border-radius:14px;background:#f0ebe2}
+.phrase-item{padding:14px;border-radius:14px;background:#f0ebe2;cursor:pointer}
 .phrase-item strong{display:block;font-size:17px}
 .phrase-item span{display:block;margin-top:4px;font-size:12px;color:var(--muted)}
 .dialogue-card{background:#f2e7e8}
